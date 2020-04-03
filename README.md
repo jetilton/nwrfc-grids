@@ -19,6 +19,8 @@ $ python
 >>> g = Grids()
 >>> g.get_grid("QPE", set_dataset=True)
 >>> g.dataset
+>>> g.warp()
+>>> g.clip_to_dss("kootnai")
 ```
 
 
