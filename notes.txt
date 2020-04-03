@@ -1,0 +1,31 @@
+Can we go over the time conversion?
+
+Where did you get the data in the basins2clip file?
+
+Go over converting to dss
+
+
+quantitative
+temperature
+precipitation
+estimate
+forecast
+temperature is average
+precip is cumulative spoke with Geoffrey Walters
+
+basin,xmin,ymin,xmax,ymax
+Lower Columbia,-2140000,2734000,-1920000,2916000
+Willamette,-2174000,2548000,-1988000,2850000
+Deschutes,-2082000,2514000,-1858000,2768000
+Mainstem Columbia,-2006000,2548000,-1698000,2872000
+Lower Snake,-1794000,2456000,-1340000,2924000
+Middle Snake,-1812000,2188000,-1486000,2664000
+Upper Snake,-1588000,2200000,-1100000,2516000
+Yakima,-1938000,2784000,-1776000,2986000
+Middle Columbia,-1880000,2814000,-1562000,3272000
+Spokane	-1670000,2808000,-1446000,2984000
+Pend Oreille,-1604000,2632000,-1238000,3112000
+Kootenai,-1604000,2910000,-1350000,3298000
+Upper Columbia,-1640000,3082000,-1418000,3506000
+
+
