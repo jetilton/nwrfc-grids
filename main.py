@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import timedelta
 import gzip
 import subprocess
+import glob
 
 # requirements
 import pandas as pd
@@ -31,11 +32,14 @@ class Grids:
     def __init__(self, pathname=None, data_layer=None, config=None):
         if pathname:
             self.set_dataset(pathname, data_layer=None)
-
+        else:
+            self.dataset = None
         self.config = config
 
     @LD
     def set_dataset(self, pathname, data_layer=None, unzipped_dir=None):
+        if self.dataset:
+            self.dataset.close()
         if pathname[-2:] == "gz":
             if not unzipped_dir:
                 unzipped_dir = "temp"
@@ -53,32 +57,40 @@ class Grids:
         data_type,
         date=None,
         directory="raw",
-        set_dataset=False,
+        set_dataset=True,
         unzipped_dir=None,
+        force=False,
     ):
+
         if not date:
             date = datetime.now().strftime("%Y%m%d")
         year = date[:4]
-        url = f"https://www.nwrfc.noaa.gov/weather/netcdf/{year}/{date}/{data_type}.{date}12.nc.gz"
-        LOGGER.info(f"Attempting to get data {url}")
-        try:
-            raw_data = wget.download(url)
-        except Exception as e:
-            LOGGER.error(f"Fatal error in wget for {url}")
-            raise e
-        LOGGER.info(f"Success, retrieved {raw_data} moving to {directory}")
-        try:
-            shutil.move(raw_data, os.path.join(directory, raw_data))
-        except Exception as e:
-            LOGGER.error(f"Could not move file {raw_data}")
-            raise e
+        fname = f"{data_type}.{date}12.nc.gz"
+        if os.path.exists(f"{directory}/{fname}") and not force:
+            LOGGER.info(f"{directory}/{fname} found locally.")
+        else:
+            url = f"https://www.nwrfc.noaa.gov/weather/netcdf/{year}/{date}/{fname}"
+            LOGGER.info(f"Attempting to get data {url}")
+            try:
+                raw_data = wget.download(url)
+            except Exception as e:
+                LOGGER.error(f"Fatal error in wget for {url}")
+                raise e
+            LOGGER.info(f"Success, retrieved {raw_data} moving to {directory}")
+            try:
+                shutil.move(raw_data, os.path.join(directory, raw_data))
+            except Exception as e:
+                LOGGER.error(f"Could not move file {raw_data}")
+                raise e
         if set_dataset:
-            self.set_dataset(
-                f"{directory}/{data_type}.{date}12.nc.gz", unzipped_dir=unzipped_dir
-            )
+            self.set_dataset(f"{directory}/{fname}", unzipped_dir=unzipped_dir)
 
     @staticmethod
-    def unzip(pathname, unzipped_dir="temp"):
+    @LD
+    def unzip(pathname, unzipped_dir="temp", remove_old=True):
+        if remove_old:
+            for f in glob.glob("temp/*.nc"):
+                os.remove(f)
         f = gzip.GzipFile(f"{pathname}", "rb")
         s = f.read()
         f.close()
@@ -145,6 +157,7 @@ class Grids:
         warped.close()
 
     @staticmethod
+    @LD
     def _to_esri_ascii(grid, output, xllcorner, yllcorner, cellsize, _FillValue):
 
         ncols, nrows = grid.shape
@@ -233,7 +246,7 @@ class Grids:
 
     @LD
     @staticmethod
-    def get_grids(data_types, start, end=None, directory="raw"):
+    def get_grids(data_types, start, end=None, directory="raw", force=False):
         fmt = "%Y%m%d"
         if data_types == "all":
             data_types = ["QPE", "QTF", "QTE", "QPF"]
@@ -247,7 +260,13 @@ class Grids:
             for i in range(delta.days + 1):
                 date = (start + timedelta(days=i)).strftime(fmt)
                 try:
-                    get_grid(data_type=data_type, date=date, directory=directory)
+                    get_grid(
+                        data_type=data_type,
+                        date=date,
+                        directory=directory,
+                        force=force,
+                        set_dataset=False,
+                    )
                 except:
                     LOGGER.error(f"Fatal error in wget for {date}", exc_info=True)
                     continue
