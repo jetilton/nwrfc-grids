@@ -189,7 +189,7 @@ class Grids:
     @LD
     @staticmethod
     def asc_to_dss(asc_pathname, dss_pathname, dss_path):
-        gridconvert = (
+        gridconvert_string = (
             os.path.join(os.getcwd(), "asc2DssGrid.sh")
             + " zlib=true GRID=SHG in="
             + asc_pathname
@@ -198,7 +198,7 @@ class Grids:
             + " path="
             + dss_path
         )
-        subprocess.call(gridconvert, shell=True)
+        subprocess.call(gridconvert_string, shell=True)
 
     @LD
     def clip_to_dss(self, project):
