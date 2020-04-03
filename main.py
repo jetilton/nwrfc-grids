@@ -29,6 +29,38 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO, format=FORMAT)
 
 
 class Grids:
+    """Utility class to scrape and process gridded data from 
+        the Northwest River Forecast Center (NWRFC).
+        url: https://www.nwrfc.noaa.gov/rfc/
+
+    Parameters
+    ----------
+    pathname : str
+        Optional parameter if want to open a local grid. (the default is None).
+    data_layer : str
+        The data type from the RFC.
+        Example: QPE (Quantitative Precipitation Estimate)
+        If none is provided it will try to be found in the grid pathname
+        Example pathname:QPE.2019020212.nc.
+        (the default is None).
+    config : dict
+        Configuration file for projects with their bounds (xmin,ymin,xmax,ymax)
+        used for clipping
+
+    Examples
+    -------
+    >>> import Grids from main
+    >>> g = Grids()
+    
+
+    Attributes
+    ----------
+    dataset : xarray.core.dataset.Dataset
+        Opened netcdf file as xarray dataset
+    config
+
+    """
+
     def __init__(self, pathname=None, data_layer=None, config=None):
         if pathname:
             self.set_dataset(pathname, data_layer=None)
@@ -38,6 +70,21 @@ class Grids:
 
     @LD
     def set_dataset(self, pathname, data_layer=None, unzipped_dir=None):
+        """Open netcdf file and set it as Grids dataset.
+
+        Parameters
+        ----------
+        pathname : type
+            Path to netcdf file.
+        data_layer : type
+            The data type from the RFC.
+            Example: QPE (Quantitative Precipitation Estimate)
+            If none is provided it will try to be found in the grid pathname
+            Example pathname:QPE.2019020212.nc.
+            (the default is None).
+        unzipped_dir : str
+            Location to keep a temporary unzipped file if pathname ends in .gz.
+        """
         if self.dataset:
             self.dataset.close()
         if pathname[-2:] == "gz":
@@ -61,6 +108,34 @@ class Grids:
         unzipped_dir=None,
         force=False,
     ):
+        """Get a NWRFC grid.
+
+        Parameters
+        ----------
+        data_type : str
+            The data type from the RFC.
+            Example: QPE (Quantitative Precipitation Estimate)
+        date : str
+            Date in "%Y%m%d" format.  Today is used if `date=None`.
+        directory : str
+            Directory to store data (the default is "raw").
+        set_dataset : boolean
+            Open file and set as xarray dataset (the default is True).
+        unzipped_dir : str
+            Directory to unzip if `set_dataset=True`.  `"temp"` is used
+            if not provided.
+        force : boolean
+            Download data even if found locally.
+
+    
+        Examples
+        -------
+        Examples should be written in doctest format, and
+        should illustrate how to use the function/class.
+        >>> g = Grids()
+        >>> g.get_grid("QPE")
+        >>> g.dataset
+        """
 
         if not date:
             date = datetime.now().strftime("%Y%m%d")
@@ -70,7 +145,7 @@ class Grids:
             LOGGER.info(f"{directory}/{fname} found locally.")
         else:
             url = f"https://www.nwrfc.noaa.gov/weather/netcdf/{year}/{date}/{fname}"
-            LOGGER.info(f"Attempting to get data {url}")
+            LOGGER.info(f"No local copy, attempting to get data {url}")
             try:
                 raw_data = wget.download(url)
             except Exception as e:
@@ -88,6 +163,8 @@ class Grids:
     @staticmethod
     @LD
     def unzip(pathname, unzipped_dir="temp", remove_old=True):
+        """Utility function to unzip files.
+        """
         if remove_old:
             for f in glob.glob("temp/*.nc"):
                 os.remove(f)
@@ -109,6 +186,33 @@ class Grids:
         cellsize=2000,
         targetAlignedPixels=True,
     ):
+        """Warps data to specified Spatial Reference System (SRS) 
+            using gdal library.
+            https://spatialreference.org
+            https://gdal.org/python/
+        Parameters
+        ----------
+        destNameOrDestDS : str
+            Destination output file path.  Will put file in `temp` if
+            `destNameOrDestDS=None`
+        dstSRS : str
+            Spatial Reference system to warp the data to.  
+            Albers North American is used if None given.
+            Although the gdalwarp can supposedly take the ESPG or SR-org numbers
+            I had the most success using proj4js string format.
+        cellsize : int
+            Output cellsize (the default is 2000).
+        targetAlignedPixels : type
+            whether to force output bounds to be multiple 
+            of output resolution (the default is True).
+
+        Examples
+        -------
+        >>> g = Grids()
+        >>> g.get_grid("QPE")
+        >>> g.warp()
+
+        """
         srs = self.dataset[self.data_layer].grid_mapping
         srcSRS = self.dataset[srs].attrs["proj4_params"]
         if not dstSRS:
@@ -159,6 +263,10 @@ class Grids:
     @staticmethod
     @LD
     def _to_esri_ascii(grid, output, xllcorner, yllcorner, cellsize, _FillValue):
+        """utility function to get grid into esri ascii format.
+        http://resources.esri.com/help/9.3/arcgisengine/java/GP_ToolRef/spatial_analyst_tools/esri_ascii_raster_format.htm
+        http://gis.humboldt.edu/OLM/Courses/GSP_318/02_X_5_WritingGridASCII.html
+        """
 
         ncols, nrows = grid.shape
         f = open(f"{output}", "w")
@@ -174,6 +282,9 @@ class Grids:
     @staticmethod
     @LD
     def clip(xmin, ymin, xmax, ymax, x, y, grid):
+        """Utility function to clip a 3 dimmensional grid given specified y/x min/max.
+            Assumes data in dimensions [time,y,x]
+        """
         x_min_idx = np.argmin(x < xmin)
         y_min_idx = np.argmin(y < ymin)
 
@@ -191,6 +302,7 @@ class Grids:
     @LD
     @staticmethod
     def get_times(time, timestep=6):
+        """Utility function to format times for dss file entry"""
         end_time = (
             pd.to_datetime(str(time)).strftime("%d%b%Y:%H%M").replace("0000", "2400")
         )
@@ -202,6 +314,9 @@ class Grids:
     @LD
     @staticmethod
     def asc_to_dss(asc_pathname, dss_pathname, dss_path):
+        """Utility function to convert esri ascii file to dss
+
+        """
         gridconvert_string = (
             os.path.join(os.getcwd(), "asc2DssGrid.sh")
             + " zlib=true GRID=SHG in="
@@ -215,6 +330,22 @@ class Grids:
 
     @LD
     def clip_to_dss(self, project):
+        """Clip dataset and store in dss file given 
+            a project name located in config.
+
+        Parameters
+        ----------
+        project : str
+            Project name located in `self.config`.
+
+        Examples
+        -------
+        >>> g = Grids(config = config)
+        >>> g.get_grid("QPE")
+        >>> g.warp()
+        >>> g.clip_to_dss("kootenai")
+
+        """
         try:
             proj_conf = self.config[project]
         except TypeError as e:
@@ -247,6 +378,8 @@ class Grids:
     @LD
     @staticmethod
     def get_grids(data_types, start, end=None, directory="raw", force=False):
+        """Utility function to download multiple grids at once
+        """
         fmt = "%Y%m%d"
         if data_types == "all":
             data_types = ["QPE", "QTF", "QTE", "QPF"]
