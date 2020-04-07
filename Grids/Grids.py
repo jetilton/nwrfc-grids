@@ -25,7 +25,6 @@ from Grids.utils import log_decorator
 LOGGER = logging.getLogger(__name__)
 LD = log_decorator(LOGGER)
 FORMAT = "%(levelname)s - %(asctime)s - %(name)s - %(message)s"
-logging.basicConfig(stream=sys.stderr, level=logging.INFO, format=FORMAT)
 
 
 class Grids:
@@ -61,11 +60,15 @@ class Grids:
 
     """
 
-    def __init__(self, pathname=None, data_layer=None, config=None):
+    def __init__(self, pathname=None, data_layer=None, config=config, verbose=True):
         if pathname:
             self.set_dataset(pathname, data_layer=None)
         else:
             self.dataset = None
+        if verbose:
+            logging.basicConfig(stream=sys.stderr, level=logging.DEBUG, format=FORMAT)
+        else:
+            logging.basicConfig(stream=sys.stderr, level=logging.INFO, format=FORMAT)
         self.config = config
 
     @LD
@@ -299,34 +302,23 @@ class Grids:
             yllcorner,
         )
 
-    @LD
     @staticmethod
+    @LD
     def get_times(time, timestep=6):
         """Utility function to format times for dss file entry"""
-        end_time = (
-            pd.to_datetime(str(time)).strftime("%d%b%Y:%H%M").replace("0000", "2400")
-        )
-        start_time = (pd.to_datetime(str(time)) - timedelta(hours=timestep)).strftime(
-            "%d%b%Y:%H%M"
-        )
+        time = pd.to_datetime(str(time))
+        if time.hour == 0:
+            end_time = time - timedelta(hours=24)
+            end_time = (
+                (time - timedelta(hours=24))
+                .strftime("%d%b%Y:%H%M")
+                .replace("0000", "2400")
+            )
+        else:
+            end_time = time.strftime("%d%b%Y:%H%M")
+        start_time = (time - timedelta(hours=timestep)).strftime("%d%b%Y:%H%M")
+        LOGGER.info(f"{time} converted to {start_time}, {end_time}.")
         return start_time, end_time
-
-    @LD
-    @staticmethod
-    def asc_to_dss(asc_pathname, dss_pathname, dss_path):
-        """Utility function to convert esri ascii file to dss
-
-        """
-        gridconvert_string = (
-            os.path.join(os.getcwd(), "asc2DssGrid.sh")
-            + " zlib=true GRID=SHG in="
-            + asc_pathname
-            + " dss="
-            + dss_pathname
-            + " path="
-            + dss_path
-        )
-        subprocess.call(gridconvert_string, shell=True)
 
     @LD
     def clip_to_dss(self, project):
@@ -375,8 +367,8 @@ class Grids:
             )
             self.asc_to_dss(asc_pathname, dss_pathname, dss_path)
 
-    @LD
     @staticmethod
+    @LD
     def get_grids(data_types, start, end=None, directory="raw", force=False):
         """Utility function to download multiple grids at once
         """
