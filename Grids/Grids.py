@@ -320,6 +320,23 @@ class Grids:
         LOGGER.info(f"{time} converted to {start_time}, {end_time}.")
         return start_time, end_time
 
+    @staticmethod
+    @LD
+    def asc_to_dss(asc_pathname, dss_pathname, dss_path):
+        """Utility function to convert esri ascii file to dss
+
+        """
+        gridconvert_string = (
+            os.path.join(os.getcwd(), "asc2DssGrid.sh")
+            + " zlib=true GRID=SHG in="
+            + asc_pathname
+            + " dss="
+            + dss_pathname
+            + " path="
+            + dss_path
+        )
+        subprocess.call(gridconvert_string, shell=True)
+
     @LD
     def clip_to_dss(self, project):
         """Clip dataset and store in dss file given 
