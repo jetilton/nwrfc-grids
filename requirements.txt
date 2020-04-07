@@ -72,7 +72,6 @@ tiledb=1.7.0=hffbbd95_2
 tk=8.6.10=hfa6e2cd_0
 vc=14.1=h869be7e_1
 vs2015_runtime=14.16.27012=h30e32a0_1
-wget=3.2=pypi_0
 wheel=0.34.2=py_1
 wincertstore=0.2=py37_1003
 xarray=0.15.1=py_0
