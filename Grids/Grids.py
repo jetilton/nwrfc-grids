@@ -61,12 +61,13 @@ class Grids:
     """
 
     def __init__(self, config=config, verbose=True):
-        self.dataset = None
         if verbose:
             logging.basicConfig(stream=sys.stderr, level=logging.DEBUG, format=FORMAT)
         else:
             logging.basicConfig(stream=sys.stderr, level=logging.INFO, format=FORMAT)
         self.config = config
+        self.dataset = None
+        self.pathname = None
 
     @LD
     def set_dataset(self, pathname, year, month, data_layer=None, unzipped_dir=None):
@@ -163,7 +164,7 @@ class Grids:
                 raise e
         if set_dataset:
             self.set_dataset(
-                os.path.join(directory, fname),
+                f"{directory}/{fname}",
                 year=year,
                 month=month,
                 unzipped_dir=unzipped_dir,
