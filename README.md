@@ -11,18 +11,16 @@ An in-depth paragraph about your project and overview of use.
 ```
 $ git clone git@extranet.crohms.org:rwcds-group/nwrfc-grids.git
 $ cd nwrfc-grids
-$ conda create -y --name grds python==3.7
-$ conda install -f -y -q --name grds --file requirements.txt
-$ conda activate grds
+$ conda env create -f environment.yml --prefix ./venv 
+$ conda activate ./venv
 $ python
->>> from main import Grids
+>>> from Grids.Grids import Grids
 >>> g = Grids()
 >>> g.get_grid("QPE", set_dataset=True)
 >>> g.dataset
 >>> g.warp()
->>> g.clip_to_dss("kootnai")
+>>> g.clip_to_dss("kootenai")
 ```
-
 
 ### Dependencies
 
