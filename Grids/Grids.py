@@ -60,11 +60,8 @@ class Grids:
 
     """
 
-    def __init__(self, pathname=None, data_layer=None, config=config, verbose=True):
-        if pathname:
-            self.set_dataset(pathname, data_layer=None)
-        else:
-            self.dataset = None
+    def __init__(self, config=config, verbose=True):
+        self.dataset = None
         if verbose:
             logging.basicConfig(stream=sys.stderr, level=logging.DEBUG, format=FORMAT)
         else:
@@ -72,7 +69,7 @@ class Grids:
         self.config = config
 
     @LD
-    def set_dataset(self, pathname, data_layer=None, unzipped_dir=None):
+    def set_dataset(self, pathname, year, month, data_layer=None, unzipped_dir=None):
         """Open netcdf file and set it as Grids dataset.
 
         Parameters
@@ -100,6 +97,8 @@ class Grids:
         self.pathname = pathname
         self.dataset = xr.open_dataset(pathname)
         self._FillValue = self.dataset[self.data_layer].encoding["_FillValue"]
+        self.year = year
+        self.month = month
 
     @LD
     def get_grid(
@@ -143,6 +142,8 @@ class Grids:
         if not date:
             date = datetime.now().strftime("%Y%m%d")
         year = date[:4]
+        month = date[4:6]
+
         fname = f"{data_type}.{date}12.nc.gz"
         if os.path.exists(f"{directory}/{fname}") and not force:
             LOGGER.info(f"{directory}/{fname} found locally.")
@@ -161,7 +162,12 @@ class Grids:
                 LOGGER.error(f"Could not move file {raw_data}")
                 raise e
         if set_dataset:
-            self.set_dataset(f"{directory}/{fname}", unzipped_dir=unzipped_dir)
+            self.set_dataset(
+                os.path.join(directory, fname),
+                year=year,
+                month=month,
+                unzipped_dir=unzipped_dir,
+            )
 
     @staticmethod
     @LD
@@ -320,25 +326,8 @@ class Grids:
         LOGGER.info(f"{time} converted to {start_time}, {end_time}.")
         return start_time, end_time
 
-    @staticmethod
     @LD
-    def asc_to_dss(asc_pathname, dss_pathname, dss_path):
-        """Utility function to convert esri ascii file to dss
-
-        """
-        gridconvert_string = (
-            os.path.join(os.getcwd(), "asc2DssGrid.sh")
-            + " zlib=true GRID=SHG in="
-            + asc_pathname
-            + " dss="
-            + dss_pathname
-            + " path="
-            + dss_path
-        )
-        subprocess.call(gridconvert_string, shell=True)
-
-    @LD
-    def clip_to_dss(self, project):
+    def clip_to_dss(self, project, cwms_dir, dss_pathname=None):
         """Clip dataset and store in dss file given 
             a project name located in config.
 
@@ -370,19 +359,39 @@ class Grids:
 
         clipped, xllcorner, yllcorner = self.clip(x=x, y=y, grid=grid, **proj_conf)
 
+        # Gathering parts for the dss pathname
+        units = self.dataset[self.data_layer].units
+        data_dict = {"P": "PRECIP", "T": "TEMPERATURE"}
+        data_type = data_dict[self.data_layer[1]]
+
+        # gathering parts to run asc2dssGrid
+        # see Corps Water Management System (CWMS) Documentation: GageInterp
+        # GageInterp: A Program for Creating a Sequence of HEC-DSS Grids
+        # from Time-Series Measurements
+        if data_type == "PRECIP":
+            dtype = "PER-CUM"
+        elif data_type == "TEMPERATURE":
+            dtype = "INST-VAL"
+
         for idx, time in enumerate(self.dataset["time"].values):
             start_time, end_time = self.get_times(time)
-            dss_path = (
-                f"/SHG/{project}/PRECIP/{start_time}/{end_time}/RFC-{self.data_layer}/"
-            )
+            if dtype == "INST-VAL":
+                end_time = ""
+            dss_path = f"/SHG/{project}/{data_type}/{start_time}/{end_time}/RFC-{self.data_layer}/"
             grid = clipped[idx]
 
             asc_pathname = os.path.join("temp", f"{self.data_layer}_temp.asc")
-            dss_pathname = "path/to/file.dss"
+            if not dss_pathname:
+                dss_pathname = os.path.join(
+                    "data", f"NWD_{self.data_layer}.{self.year}.{self.month}.dss"
+                )
             self._to_esri_ascii(
                 grid, asc_pathname, xllcorner, yllcorner, self.cellsize, self._FillValue
             )
-            self.asc_to_dss(asc_pathname, dss_pathname, dss_path)
+
+            asc2dssGrid = os.path.join(cwms_dir, "common", "grid", "asc2dssGrid")
+            cmd = f"{asc2dssGrid} in={asc_pathname} dss={dss_pathname} path={dss_path} grid=SHG dunits={units} dtype={dtype}"
+            subprocess.run(cmd)
 
     @staticmethod
     @LD
