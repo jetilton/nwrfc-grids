@@ -328,7 +328,7 @@ class Grids:
         return start_time, end_time
 
     @LD
-    def clip_to_dss(self, project, cwms_dir, dss_pathname=None):
+    def clip_to_dss(self, project, dss_pathname=None):
         """Clip dataset and store in dss file given 
             a project name located in config.
 
@@ -390,8 +390,8 @@ class Grids:
                 grid, asc_pathname, xllcorner, yllcorner, self.cellsize, self._FillValue
             )
 
-            asc2dssGrid = os.path.join(cwms_dir, "common", "grid", "asc2dssGrid")
-            cmd = f"{asc2dssGrid} in={asc_pathname} dss={dss_pathname} path={dss_path} grid=SHG dunits={units} dtype={dtype}"
+            # asc2dssGrid = os.path.join(cwms_dir, "common", "grid", "asc2dssGrid")
+            cmd = f"asc2dssGrid in={asc_pathname} dss={dss_pathname} path={dss_path} grid=SHG dunits={units} dtype={dtype}"
             subprocess.run(cmd)
 
     @staticmethod
