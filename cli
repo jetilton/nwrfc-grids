@@ -25,7 +25,8 @@ def cli():
 @click.option("--start", default=None)
 @click.option("--end", default=None)
 @click.option("--data_types", default=None)
-def g2dss(projects, start, end, data_types):
+@click.option("--force", is_flag=True)
+def g2dss(projects, start, end, data_types, force):
     fmt = "%Y%m%d"
 
     if not projects:
@@ -45,16 +46,15 @@ def g2dss(projects, start, end, data_types):
 
     if not start:
         start = end
-    start = datetime.strptime(start, fmt)
+    else:
+        start = datetime.strptime(start, fmt)
     delta = end - start
     g = Grids()
     for data_type in data_types:
         for i in range(delta.days + 1):
             date = (start + timedelta(days=i)).strftime(fmt)
             try:
-                g.get_grid(
-                    data_type=data_type, date=date,
-                )
+                g.get_grid(data_type=data_type, date=date, force=force)
                 g.warp()
             except:
                 LOGGER.error(
