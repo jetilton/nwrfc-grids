@@ -68,3 +68,9 @@ class TestClass(object):
         y_shape = g.dataset["y"].values.shape[0]
 
         assert g_shape == (t_shape, y_shape, x_shape)
+
+    def test_clip_to_dss_precipitation(self):
+        pass
+
+    def test_clip_to_dss_temperature(self):
+        pass
