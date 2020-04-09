@@ -20,6 +20,7 @@ $ python
 >>> g.dataset
 >>> g.warp()
 >>> g.clip_to_dss(project="kootenai", cwms_dir="path/to/cwms")
+>>> # now go and check the data directory for your dss file
 ```
 
 
