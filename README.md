@@ -19,7 +19,7 @@ $ python
 >>> g.get_grid("QPE", set_dataset=True)
 >>> g.dataset
 >>> g.warp()
->>> g.clip_to_dss("kootenai")
+>>> g.clip_to_dss(project="kootenai", cwms_dir="path/to/cwms")
 ```
 
 ### Dependencies
