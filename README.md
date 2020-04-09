@@ -4,7 +4,7 @@ Utility to download, warp, and convert Northwest River Forecasting netcdf files 
 
 ## Description
 
-An in-depth paragraph about your project and overview of use.
+so empty
 
 ## Getting Started
 
@@ -22,7 +22,5 @@ $ python
 >>> g.clip_to_dss(project="kootenai", cwms_dir="path/to/cwms")
 ```
 
-### Dependencies
 
-located in `requirements.txt`
 
