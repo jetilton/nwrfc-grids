@@ -10,7 +10,7 @@ temperature
 precipitation
 estimate
 forecast
-temperature is average
+temperature is average spoke with Geoffrey Walters
 precip is cumulative spoke with Geoffrey Walters
 
 basin,xmin,ymin,xmax,ymax
