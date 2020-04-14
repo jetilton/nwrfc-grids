@@ -278,7 +278,7 @@ class Grids:
         http://gis.humboldt.edu/OLM/Courses/GSP_318/02_X_5_WritingGridASCII.html
         """
 
-        ncols, nrows = grid.shape
+        nrows, ncols = grid.shape
         f = open(f"{output}", "w")
         f.write(f"ncols         {ncols}\n")
         f.write(f"nrows         {nrows}\n")
