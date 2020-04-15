@@ -4,7 +4,7 @@ Utility to download, warp, and convert Northwest River Forecasting netcdf files 
 
 ## Description
 
-so empty
+The [Northwest River Forecast Center (NWRFC)](https://www.nwrfc.noaa.gov/rfc/) offers multiple [data downloads](https://www.nwrfc.noaa.gov/misc/downloads/). 
 
 ## Getting Started
 
