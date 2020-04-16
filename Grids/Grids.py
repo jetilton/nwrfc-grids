@@ -311,8 +311,12 @@ class Grids:
 
     @staticmethod
     @LD
-    def get_times(time, timestep=6):
-        """Utility function to format times for dss file entry"""
+    def get_times(time, dtype, timestep=6):
+        """Utility function to format times for dss file entry
+        DSS is very strange about how it accepts the times for both precip and temp
+        The below is ugly bc I had to make several changes, could probably be 
+        redone so it isn't such a mess.
+        """
         time = pd.to_datetime(str(time))
         if time.hour == 0:
             end_time = time - timedelta(hours=24)
@@ -323,7 +327,17 @@ class Grids:
             )
         else:
             end_time = time.strftime("%d%b%Y:%H%M")
-        start_time = (time - timedelta(hours=timestep)).strftime("%d%b%Y:%H%M")
+        if dtype == "INST-VAL":
+            end_time = ""
+        start_time = time - timedelta(hours=timestep)
+        if dtype == "INST-VAL" and start_time.hour == 0:
+            start_time = (
+                (start_time - timedelta(hours=24))
+                .strftime("%d%b%Y:%H%M")
+                .replace(":0000", ":2400")
+            )
+        else:
+            start_time = start_time.strftime("%d%b%Y:%H%M")
         LOGGER.info(f"{time} converted to {start_time}, {end_time}.")
         return start_time, end_time
 
@@ -376,9 +390,8 @@ class Grids:
             units = '"DEG F"'
 
         for idx, time in enumerate(self.dataset["time"].values):
-            start_time, end_time = self.get_times(time)
-            if dtype == "INST-VAL":
-                end_time = ""
+            start_time, end_time = self.get_times(time, dtype=dtype)
+
             dss_path = f"/SHG/{project}/{data_type}/{start_time}/{end_time}/RFC-{self.data_layer}/"
             grid = clipped[idx]
 
