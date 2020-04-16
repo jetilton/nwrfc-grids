@@ -373,6 +373,7 @@ class Grids:
             dtype = "PER-CUM"
         elif data_type == "TEMPERATURE":
             dtype = "INST-VAL"
+            units = '"DEG F"'
 
         for idx, time in enumerate(self.dataset["time"].values):
             start_time, end_time = self.get_times(time)
@@ -392,7 +393,12 @@ class Grids:
 
             # asc2dssGrid = os.path.join(cwms_dir, "common", "grid", "asc2dssGrid")
             cmd = f"asc2dssGrid in={asc_pathname} dss={dss_pathname} path={dss_path} grid=SHG dunits={units} dtype={dtype}"
-            subprocess.run(cmd)
+            LOGGER.info(f"Attempting to run: {cmd}")
+            try:
+                subprocess.run(cmd)
+            except Exception as e:
+                LOGGER.error(f"Fatal error in {cmd}", exc_info=True)
+                raise e
 
     @staticmethod
     @LD
