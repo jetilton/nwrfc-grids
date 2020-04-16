@@ -57,9 +57,7 @@ def g2dss(projects, start, end, data_types, force):
                 g.get_grid(data_type=data_type, date=date, force=force)
                 g.warp()
             except:
-                LOGGER.error(
-                    f"Fatal error for {project} {data_type} {date} ", exc_info=True
-                )
+                LOGGER.error(f"Fatal error for {data_type} {date} ", exc_info=True)
                 continue
             for project in projects:
                 g.clip_to_dss(project=project)
