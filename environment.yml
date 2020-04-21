@@ -7,9 +7,10 @@ dependencies:
   - boost-cpp=1.72.0=h0caebb8_0
   - bzip2=1.0.8=hfa6e2cd_2
   - ca-certificates=2020.1.1=0
-  - certifi=2019.11.28=py37_1
+  - certifi=2020.4.5.1=py37_0
   - cfitsio=3.470=hfa6e2cd_2
   - cftime=1.1.1.1=py37h2a96729_0
+  - click=7.1.1=py_0
   - curl=7.68.0=h4496350_0
   - expat=2.2.9=he025d50_2
   - freetype=2.10.1=ha9979f8_0
@@ -57,7 +58,7 @@ dependencies:
   - netcdf4=1.5.3=nompi_py37h727d961_103
   - numpy=1.18.1=py37h90d3380_1
   - openjpeg=2.3.1=h57dd2e7_3
-  - openssl=1.1.1=he774522_0
+  - openssl=1.1.1f=he774522_0
   - pandas=1.0.3=py37h9b59f54_0
   - pcre=8.44=h6538335_0
   - pip=20.0.2=py_2
@@ -86,3 +87,5 @@ dependencies:
   - zstd=1.4.4=hd8a0e53_2
   - pip:
     - wget==3.2
+
+
