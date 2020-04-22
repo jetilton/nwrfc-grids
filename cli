@@ -63,12 +63,12 @@ def g2dss(projects, start, end, data_types, force, split):
                     set_dataset=True,
                 )
             except:
-                LOGGER.error(f"Fatal error for {data_type} {date} ", exc_info=True)
+                LOGGER.error(f"Fatal error for {data_type} {date}", exc_info=True)
                 continue
             g.get_grid(
                 data_type=data_type,
                 date=date,
-                force=force,
+                force=False,
                 split=False,
                 set_dataset=True,
             )
