@@ -412,7 +412,9 @@ class Grids:
 
             dss_path = f"/SHG/{project}/{data_type}/{start_time}/{end_time}/RFC-{self.data_layer}/"
             grid = clipped[idx]
-
+            if np.all(np.isnan(grid)):
+                LOGGER.warning(f"Missing data for {dss_path}")
+                continue
             asc_pathname = os.path.join("temp", f"{self.data_layer}_temp.asc")
             if not dss_pathname:
                 dss_pathname = os.path.join(
@@ -427,6 +429,7 @@ class Grids:
             LOGGER.info(f"Attempting to run: {cmd}")
             try:
                 subprocess.run(cmd)
+                LOGGER.info(f"{dss_path} written to {dss_pathname}")
             except Exception as e:
                 LOGGER.error(f"Fatal error in {cmd}", exc_info=True)
                 raise e
