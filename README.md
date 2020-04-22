@@ -83,7 +83,7 @@ Now go and check the data directory for your dss file
 $ conda activate ./venv
 $ python cli g2dss --projects kootenai,deschutes --data_types QPE,QTE --start 20200401 --end 20200404
 $ python cli g2dss --projects kootenai
-$ python cli g2dss 
+$ python cli g2dss --project all --data_types all
 ```
 
 
