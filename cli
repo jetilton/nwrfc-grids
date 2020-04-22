@@ -26,15 +26,16 @@ def cli():
 @click.option("--end", default=None)
 @click.option("--data_types", default=None)
 @click.option("--force", is_flag=True)
-def g2dss(projects, start, end, data_types, force):
+@click.option("--split", default=True)
+def g2dss(projects, start, end, data_types, force, split):
     fmt = "%Y%m%d"
 
-    if not projects:
-        projects = config.keys()
+    if projects == "all":
+        projects = list(config.keys())
     else:
         projects = [s.strip() for s in projects.split(",")]
 
-    if not data_types:
+    if data_types == "all":
         data_types = ["QPE", "QTF", "QTE", "QPF"]
     else:
         data_types = [s.strip() for s in data_types.split(",")]
@@ -52,13 +53,27 @@ def g2dss(projects, start, end, data_types, force):
     g = Grids()
     for data_type in data_types:
         for i in range(delta.days + 1):
-            date = (start + timedelta(days=i)).strftime(fmt)
+            date = (end - timedelta(days=i)).strftime(fmt)
             try:
-                g.get_grid(data_type=data_type, date=date, force=force)
-                g.warp()
+                g.get_grid(
+                    data_type=data_type,
+                    date=date,
+                    force=force,
+                    split=split,
+                    set_dataset=True,
+                )
             except:
                 LOGGER.error(f"Fatal error for {data_type} {date} ", exc_info=True)
                 continue
+            g.get_grid(
+                data_type=data_type,
+                date=date,
+                force=force,
+                split=False,
+                set_dataset=True,
+            )
+            g.warp()
+
             for project in projects:
                 g.clip_to_dss(project=project)
 
