@@ -3,6 +3,7 @@ import glob
 import sys
 import shutil
 from datetime import datetime
+from datetime import timedelta
 import logging
 
 import pytest
@@ -16,8 +17,15 @@ from Grids.Grids import Grids
 def g():
     g = Grids()
     yield g
-    g.dataset.close()
+    if g.dataset:
+        g.dataset.close()
+    for f in glob.glob("test/temp/*.nc"):
+        os.remove(f)
+    for f in glob.glob("test/data/*.nc"):
+        os.remove(f)
     for f in glob.glob("temp/*.nc"):
+        os.remove(f)
+    for f in glob.glob("raw/*.gz"):
         os.remove(f)
 
 
@@ -46,12 +54,13 @@ class TestClass(object):
     def test_get_grid_date_already_exists(self, g):
 
         with self._caplog.at_level(logging.INFO):
-            g.get_grid("QPE")
+            g.get_grid("QPE", "20200421")
+            g.get_grid("QPE", "20200421")
             assert g.dataset
-            assert "found locally." in self._caplog.records[0].message
+            assert "found locally." in self._caplog.records[1].message
 
     def test_warp(self, g):
-        g.get_grid("QPE")
+        g.get_grid("QPE", "20200421")
         assert g.dataset
         assert "crs" in g.dataset.data_vars
         # I want to get the time shape before the warp
@@ -69,8 +78,21 @@ class TestClass(object):
 
         assert g_shape == (t_shape, y_shape, x_shape)
 
-    def test_clip_to_dss_precipitation(self):
+    def test_clip_to_dss(self):
         pass
 
-    def test_clip_to_dss_temperature(self):
-        pass
+    def test_split(self, g):
+        hrs = [-6, 0, 6, 12]
+
+        g.get_grids("QPE", "20180421", "20180423", force=True)
+
+        for f in glob.glob("raw/*.gz"):
+            date = f.split("QPE.")[1].split("12.nc.gz")[0]
+            d = datetime.strptime(date, "%Y%m%d")
+            expected_dates = pd.to_datetime([d + timedelta(hours=h) for h in hrs])
+            g.get_grid("QPE", date)
+            times = g.dataset["time"].values
+            assert times.shape[0] == 4
+            dates = pd.to_datetime(g.dataset["time"].values)
+            for a, b in zip(dates, expected_dates):
+                assert a == b
