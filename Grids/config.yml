@@ -1,0 +1,140 @@
+boise:
+  xmax: -1486000
+  xmin: -1626000
+  ymax: 2546000
+  ymin: 2406000
+clearwater:
+  xmax: -1408000
+  xmin: -1616000
+  ymax: 2844000
+  ymin: 2636000
+cowlitz_lewis:
+  xmax: -1950000
+  xmin: -2066000
+  ymax: 2920000
+  ymin: 2804000
+deschutes:
+  xmax: -1858000
+  xmin: -2082000
+  ymax: 2768000
+  ymin: 2514000
+green:
+  xmax: -1906576
+  xmin: -1974576
+  ymax: 3005000
+  ymin: 2937000
+kootenai:
+  xmax: -1350000
+  xmin: -1604000
+  ymax: 3298000
+  ymin: 2910000
+little_wood:
+  xmax: -1404000
+  xmin: -1568000
+  ymax: 2475000
+  ymin: 2338000
+lower_columbia:
+  xmax: -1920000
+  xmin: -2140000
+  ymax: 2916000
+  ymin: 2734000
+lower_snake:
+  xmax: -1340000
+  xmin: -1794000
+  ymax: 2924000
+  ymin: 2456000
+mainstem_columbia:
+  xmax: -1698000
+  xmin: -2006000
+  ymax: 2872000
+  ymin: 2548000
+middle_columbia:
+  xmax: -1562000
+  xmin: -1880000
+  ymax: 3272000
+  ymin: 2814000
+middle_snake:
+  xmax: -1486000
+  xmin: -1812000
+  ymax: 2664000
+  ymin: 2188000
+mill:
+  xmax: -3366000
+  xmin: -3424000
+  ymax: 5552000
+  ymin: 5494000
+pend_oreille:
+  xmax: -1238000
+  xmin: -1604000
+  ymax: 3112000
+  ymin: 2632000
+powder:
+  xmax: -1628000
+  xmin: -1756000
+  ymax: 2703000
+  ymin: 2575000
+puyallup:
+  xmax: -1912000
+  xmin: -1988000
+  ymax: 2988000
+  ymin: 2912000
+rogue:
+  xmax: -2092000
+  xmin: -2292000
+  ymax: 2618000
+  ymin: 2418000
+samish:
+  xmax: -1922000
+  xmin: -1952000
+  ymax: 3132000
+  ymin: 3102000
+skagit:
+  xmax: -1808000
+  xmin: -1960000
+  ymax: 3176000
+  ymin: 3024000
+spokane:
+  xmax: -1446000
+  xmin: -1670000
+  ymax: 2984000
+  ymin: 2808000
+umpqua:
+  xmax: -2080000
+  xmin: -2240000
+  ymax: 2656000
+  ymin: 2496000
+upper_columbia:
+  xmax: -1418000
+  xmin: -1640000
+  ymax: 3506000
+  ymin: 3082000
+upper_snake:
+  xmax: -1100000
+  xmin: -1588000
+  ymax: 2516000
+  ymin: 2200000
+willamette:
+  xmax: -1988000
+  xmin: -2174000
+  ymax: 2850000
+  ymin: 2548000
+willow:
+  xmax: -1228000
+  xmin: -1292000
+  ymax: 2372000
+  ymin: 2308000
+willowcreek_nwp:
+  xmax: -1781153
+  xmin: -1873153
+  ymax: 2776194
+  ymin: 2684194
+wynoochee:
+  xmax: -2054000
+  xmin: -2092000
+  ymax: 3006000
+  ymin: 2968000
+yakima:
+  xmax: -1776000
+  xmin: -1938000
+  ymax: 2986000
+  ymin: 2784000
