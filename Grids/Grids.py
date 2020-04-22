@@ -17,6 +17,7 @@ import pytz
 import numpy as np
 import wget
 import gdal
+import yaml
 
 # local
 from Grids.config import config
@@ -70,7 +71,9 @@ class Grids:
         self.pathname = None
 
     @LD
-    def set_dataset(self, pathname, year, month, data_layer=None, unzipped_dir=None):
+    def set_dataset(
+        self, pathname, year, month, data_layer=None, unzipped_dir=None, remove_old=True
+    ):
         """Open netcdf file and set it as Grids dataset.
 
         Parameters
@@ -91,7 +94,9 @@ class Grids:
         if pathname[-2:] == "gz":
             if not unzipped_dir:
                 unzipped_dir = "temp"
-            pathname = self.unzip(pathname, unzipped_dir=unzipped_dir)
+            pathname = self.unzip(
+                pathname, unzipped_dir=unzipped_dir, remove_old=remove_old
+            )
         if not data_layer:
             data_layer = pathname.split(".")[0][-3:]
         self.data_layer = data_layer
@@ -100,6 +105,11 @@ class Grids:
         self._FillValue = self.dataset[self.data_layer].encoding["_FillValue"]
         self.year = year
         self.month = month
+        # Some of the earlier grids have nan values when I think should be set to the _FillValue
+        # Need to confirm with NWRFC.
+        self.dataset[self.data_layer].values = np.nan_to_num(
+            self.dataset[self.data_layer].values, nan=self._FillValue
+        )
 
     @LD
     def get_grid(
@@ -110,6 +120,8 @@ class Grids:
         set_dataset=True,
         unzipped_dir=None,
         force=False,
+        remove_old=True,
+        split=False,
     ):
         """Get a NWRFC grid.
 
@@ -129,6 +141,9 @@ class Grids:
             if not provided.
         force : boolean
             Download data even if found locally.
+        split : boolean
+            Split the dataset up in to individual days.  Older files
+            have 10 days of data within them.
 
     
         Examples
@@ -168,7 +183,10 @@ class Grids:
                 year=year,
                 month=month,
                 unzipped_dir=unzipped_dir,
+                remove_old=remove_old,
             )
+        if split:
+            self._split()
 
     @staticmethod
     @LD
@@ -413,11 +431,41 @@ class Grids:
                 LOGGER.error(f"Fatal error in {cmd}", exc_info=True)
                 raise e
 
-    @staticmethod
     @LD
-    def get_grids(data_types, start, end=None, directory="raw", force=False):
+    def _split(self, dir="raw"):
+        """
+        utiltity function to split data up into individual days
+        older files from NWRFC have 10 days of data in them.
+        """
+        times = pd.to_datetime(self.dataset["time"].values)
+        start_times = times.hour == 18
+        idxs = [i for i, x in enumerate(start_times) if x]
+        for idx in idxs:
+            dataset = self.dataset.sel(
+                dict(time=self.dataset["time"].values[idx : idx + 4])
+            )
+            date = (times[idx] + timedelta(days=1)).strftime("%Y%m%d")
+            path = os.path.join(dir, f"{self.data_layer}.{date}12.nc")
+            dataset.to_netcdf(path=path)
+            with open(path, "rb") as f_in, gzip.open(f"{path}.gz", "wb") as f_out:
+                f_out.writelines(f_in)
+            os.remove(path)
+
+    @LD
+    def get_grids(
+        self,
+        data_types,
+        start,
+        end=None,
+        directory="raw",
+        force=False,
+        set_dataset=True,
+        remove_old=True,
+    ):
         """Utility function to download multiple grids at once
         """
+        if isinstance(data_types, str):
+            data_types = [data_types]
         fmt = "%Y%m%d"
         if data_types == "all":
             data_types = ["QPE", "QTF", "QTE", "QPF"]
@@ -429,15 +477,22 @@ class Grids:
         delta = end - start
         for data_type in data_types:
             for i in range(delta.days + 1):
-                date = (start + timedelta(days=i)).strftime(fmt)
+                date = (end - timedelta(days=i)).strftime(fmt)
                 try:
-                    get_grid(
+                    self.get_grid(
                         data_type=data_type,
                         date=date,
                         directory=directory,
                         force=force,
-                        set_dataset=False,
+                        set_dataset=set_dataset,
+                        remove_old=remove_old,
+                        split=True,
                     )
                 except:
                     LOGGER.error(f"Fatal error in wget for {date}", exc_info=True)
                     continue
+
+    def add_project(self, project_dict):
+        config.update(project_dict)
+        with open("Grids/config.yml", "w", encoding="utf8") as outfile:
+            yaml.dump(config, outfile, default_flow_style=False, allow_unicode=True)
