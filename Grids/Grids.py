@@ -105,11 +105,6 @@ class Grids:
         self._FillValue = self.dataset[self.data_layer].encoding["_FillValue"]
         self.year = year
         self.month = month
-        # Some of the earlier grids have nan values when I think should be set to the _FillValue
-        # Need to confirm with NWRFC.
-        self.dataset[self.data_layer].values = np.nan_to_num(
-            self.dataset[self.data_layer].values, nan=self._FillValue
-        )
 
     @LD
     def get_grid(
@@ -447,6 +442,10 @@ class Grids:
             dataset = self.dataset.sel(
                 dict(time=self.dataset["time"].values[idx : idx + 4])
             )
+            grid = dataset[self.data_layer].values
+            if np.all(np.isnan(grid)):
+                LOGGER.warning(f"Missing data for {times[idx]}")
+                continue
             date = (times[idx] + timedelta(days=1)).strftime("%Y%m%d")
             path = os.path.join(dir, f"{self.data_layer}.{date}12.nc")
             dataset.to_netcdf(path=path)
