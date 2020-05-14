@@ -86,5 +86,12 @@ $ python cli g2dss --projects kootenai
 $ python cli g2dss --project all --data_types all
 ```
 
+Blended dss files are also available with the below command.  Lookback gives the number of 
+days to lookback for observed data and any forecasts currently available will be added as well.  This command will delete the project's current blended dss path and create a new one.  The dss file for the below command will be: NWD_kootenai.2020.dss
+
+```
+$ python cli blend --projects kootenai --lookback 5 --data_types "QP"
+```
+
 
 
