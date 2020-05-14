@@ -2,14 +2,14 @@ import functools
 from functools import wraps
 
 
-def log_decorator(logger):
+def log_decorator(logger, level=10):
     def real_decorator(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
             name = function.__name__
-            logger.debug(f"Start {name}")
+            logger.log(level=level, msg=f"Start {name}")
             out = function(*args, **kwargs)
-            logger.debug(f"End {name}")
+            logger.log(level=level, msg=f"End {name}")
             return out
 
         return wrapper
