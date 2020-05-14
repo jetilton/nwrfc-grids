@@ -237,7 +237,13 @@ class Grids:
 
         """
         srs = self.dataset[self.data_layer].grid_mapping
-        srcSRS = self.dataset[srs].attrs["proj4_params"]
+        try:
+            srcSRS = self.dataset[srs].attrs["proj4_params"]
+        except KeyError:
+            LOGGER.warning(
+                f"proj4_params not found assuming +proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+            )
+            srcSRS = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
         if not dstSRS:
             dstSRS = "+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 datum=NAD83 +towgs84=1,1,-1,0,0,0,0 +units=m"
         self.cellsize = cellsize
@@ -355,7 +361,7 @@ class Grids:
         return start_time, end_time
 
     @LD
-    def clip_to_dss(self, project, dss_pathname=None):
+    def clip_to_dss(self, project, dss_paths="both"):
         """Clip dataset and store in dss file given 
             a project name located in config.
 
@@ -411,23 +417,40 @@ class Grids:
                 LOGGER.warning(f"Missing data for {dss_path}")
                 continue
             asc_pathname = os.path.join("temp", f"{self.data_layer}_temp.asc")
-            if not dss_pathname:
-                dss_pathname = os.path.join(
-                    "data", f"NWD_{self.data_layer}.{self.year}.{self.month}.dss"
-                )
+
+            dss_pathname = os.path.join(
+                "data", f"NWD_{self.data_layer}.{self.year}.{self.month}.dss"
+            )
+            project_pathname = os.path.join("data", f"NWD_{project}.{self.year}.dss")
+
+            if dss_paths == "both":
+                dss_pathnames = [dss_pathname, project_pathname]
+            if dss_paths == "project":
+                dss_pathnames = [project_pathname]
+            if dss_paths == "datatype":
+                dss_pathnames = [dss_pathname]
+            if dss_paths == "blend":
+                project_pathname = os.path.join("data", f"NWD_{project}.blend.dss")
+                if os.path.exists(project_pathname):
+                    os.remove(project_pathname)
+                dss_pathnames = [project_pathname]
+
+            if isinstance(dss_paths, list):
+                dss_pathnames = dss_paths
+
             self._to_esri_ascii(
                 grid, asc_pathname, xllcorner, yllcorner, self.cellsize, self._FillValue
             )
-
-            # asc2dssGrid = os.path.join(cwms_dir, "common", "grid", "asc2dssGrid")
-            cmd = f"asc2dssGrid in={asc_pathname} dss={dss_pathname} path={dss_path} grid=SHG dunits={units} dtype={dtype}"
-            LOGGER.info(f"Attempting to run: {cmd}")
-            try:
-                subprocess.run(cmd)
-                LOGGER.info(f"{dss_path} written to {dss_pathname}")
-            except Exception as e:
-                LOGGER.error(f"Fatal error in {cmd}", exc_info=True)
-                raise e
+            for dss_pathname in dss_pathnames:
+                # asc2dssGrid = os.path.join(cwms_dir, "common", "grid", "asc2dssGrid")
+                cmd = f"asc2dssGrid in={asc_pathname} dss={dss_pathname} path={dss_path} grid=SHG dunits={units} dtype={dtype}"
+                LOGGER.info(f"Attemptinfrom Grids to run: {cmd}")
+                try:
+                    subprocess.run(cmd)
+                    LOGGER.info(f"{dss_path} written to {dss_pathname}")
+                except Exception as e:
+                    LOGGER.error(f"Fatal error in {cmd}", exc_info=True)
+                    raise e
 
     @LD
     def _split(self, dir="raw"):
@@ -452,6 +475,48 @@ class Grids:
             with open(path, "rb") as f_in, gzip.open(f"{path}.gz", "wb") as f_out:
                 f_out.writelines(f_in)
             os.remove(path)
+
+    @LD
+    def blend(self, data_type, lookback=10, force=False):
+
+        fmt = "%Y%m%d"
+        end = datetime.now()
+        dataset_list = []
+        for i in range(lookback + 1):
+            date = (end - timedelta(days=i)).strftime(fmt)
+            try:
+                self.get_grid(
+                    data_type=data_type + "E",
+                    date=date,
+                    force=force,
+                    split=False,
+                    set_dataset=True,
+                    remove_old=False,
+                )
+                self.warp()
+                d = self.dataset.copy()
+                dataset_list.append(d)
+            except:
+                LOGGER.error(f"Fatal error for {data_type} {date}", exc_info=True)
+                continue
+        self.get_grid(data_type + "F", remove_old=False)
+        dataset_list.append(self.dataset.copy())
+        new_layer_name = data_type + "B"
+        self.dataset_list = dataset_list
+        new_dataset_list = []
+        for dataset in dataset_list:
+            try:
+                new_dataset_list.append(
+                    dataset.rename({data_type + "E": new_layer_name})
+                )
+            except ValueError:
+                new_dataset_list.append(
+                    dataset.rename({data_type + "F": new_layer_name})
+                )
+        dataset_list = None
+
+        self.dataset = xr.auto_combine(new_dataset_list)
+        self.data_layer = new_layer_name
 
     @LD
     def get_grids(
