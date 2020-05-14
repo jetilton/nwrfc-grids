@@ -78,5 +78,30 @@ def g2dss(projects, start, end, data_types, force, split):
                 g.clip_to_dss(project=project)
 
 
+@cli.command("blend")
+@click.option("--projects", default=None)
+@click.option("--lookback", default=10)
+@click.option("--data_types", default=None)
+@click.option("--force", is_flag=True)
+def blend(projects, lookback, data_types, force):
+    lookback = int(lookback)
+    if projects == "all":
+        projects = list(config.keys())
+    else:
+        projects = [s.strip() for s in projects.split(",")]
+
+    if data_types == "all":
+        data_types = ["QP", "QT"]
+    else:
+        data_types = [s.strip() for s in data_types.split(",")]
+
+    for data_type in data_types:
+        g = Grids()
+        g.blend(data_type=data_type, lookback=lookback, force=force)
+        for project in projects:
+            g.clip_to_dss(project=project, dss_paths="blend")
+        g.dataset.close()
+
+
 if __name__ == "__main__":
     cli()
