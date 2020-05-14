@@ -27,6 +27,7 @@ def cli():
 @click.option("--start", default=None)
 @click.option("--end", default=None)
 @click.option("--data_types", default=None)
+@click.option("--dss_paths", default="both")
 @click.option("--force", is_flag=True)
 @click.option("--split", default=True)
 def g2dss(projects, start, end, data_types, force, split):
@@ -77,7 +78,7 @@ def g2dss(projects, start, end, data_types, force, split):
             g.warp()
 
             for project in projects:
-                g.clip_to_dss(project=project)
+                g.clip_to_dss(project=project, dss_paths=dss_paths)
 
 
 @cli.command("blend")
