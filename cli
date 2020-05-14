@@ -3,6 +3,8 @@ from datetime import datetime
 from datetime import timedelta
 import sys
 import logging
+import os
+import glob
 
 import click
 
@@ -94,13 +96,21 @@ def blend(projects, lookback, data_types, force):
         data_types = ["QP", "QT"]
     else:
         data_types = [s.strip() for s in data_types.split(",")]
-
     for data_type in data_types:
         g = Grids()
         g.blend(data_type=data_type, lookback=lookback, force=force)
         for project in projects:
-            g.clip_to_dss(project=project, dss_paths="blend")
+            project_pathname = os.path.join("data", f"NWD_{project}.blend.dss")
+            if os.path.exists(project_pathname):
+                os.remove(project_pathname)
+            g.clip_to_dss(project=project, dss_paths=[project_pathname])
         g.dataset.close()
+    old_files = glob.glob("temp/*.nc")
+    for f in old_files:
+        try:
+            os.remove(f)
+        except:
+            continue
 
 
 if __name__ == "__main__":
