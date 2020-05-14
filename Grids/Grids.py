@@ -429,11 +429,6 @@ class Grids:
                 dss_pathnames = [project_pathname]
             if dss_paths == "datatype":
                 dss_pathnames = [dss_pathname]
-            if dss_paths == "blend":
-                project_pathname = os.path.join("data", f"NWD_{project}.blend.dss")
-                if os.path.exists(project_pathname):
-                    os.remove(project_pathname)
-                dss_pathnames = [project_pathname]
 
             if isinstance(dss_paths, list):
                 dss_pathnames = dss_paths
