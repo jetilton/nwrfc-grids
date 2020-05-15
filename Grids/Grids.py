@@ -451,7 +451,7 @@ class Grids:
             if os.name == "nt":
                 subprocess.run(f"asc2DssGrid {cmd}")
             else:
-                subprocess.call(f"asc2DssGrid.sh {cmd}", shell=True)
+                subprocess.run(f"./asc2dssGrid.sh {cmd}", shell=True)
             LOGGER.info(f"{dss_path} written to {dss_pathname}")
         except Exception as e:
             LOGGER.error(f"Fatal error in {cmd}", exc_info=True)
