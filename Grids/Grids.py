@@ -49,7 +49,7 @@ class Grids:
 
     Examples
     -------
-    >>> import Grids from main
+    >>> from Grids.Grids import Grids
     >>> g = Grids()
     
 
@@ -365,6 +365,8 @@ class Grids:
         """Clip dataset and store in dss file given 
             a project name located in config.
 
+            Starting to get ugly... Sorry future self :(
+
         Parameters
         ----------
         project : str
@@ -437,15 +439,23 @@ class Grids:
                 grid, asc_pathname, xllcorner, yllcorner, self.cellsize, self._FillValue
             )
             for dss_pathname in dss_pathnames:
-                # asc2dssGrid = os.path.join(cwms_dir, "common", "grid", "asc2dssGrid")
-                cmd = f"asc2dssGrid in={asc_pathname} dss={dss_pathname} path={dss_path} grid=SHG dunits={units} dtype={dtype}"
-                LOGGER.info(f"Attemptinfrom Grids to run: {cmd}")
-                try:
-                    subprocess.run(cmd)
-                    LOGGER.info(f"{dss_path} written to {dss_pathname}")
-                except Exception as e:
-                    LOGGER.error(f"Fatal error in {cmd}", exc_info=True)
-                    raise e
+                self.asc2dssGrid(dss_pathname, asc_pathname, dss_path, units, dtype)
+
+    @staticmethod
+    @LD
+    def asc2dssGrid(dss_pathname, asc_pathname, dss_path, units, dtype):
+        # asc2dssGrid = os.path.join(cwms_dir, "common", "grid", "asc2dssGrid")
+        cmd = f" in={asc_pathname} dss={dss_pathname} path={dss_path} grid=SHG dunits={units} dtype={dtype}"
+        LOGGER.info(f"Attemptinfrom Grids to run: {cmd}")
+        try:
+            if os.name == "nt":
+                subprocess.run(f"asc2DssGrid {cmd}")
+            else:
+                subprocess.call(f"asc2DssGrid.sh {cmd}", shell=True)
+            LOGGER.info(f"{dss_path} written to {dss_pathname}")
+        except Exception as e:
+            LOGGER.error(f"Fatal error in {cmd}", exc_info=True)
+            raise e
 
     @LD
     def _split(self, dir="raw"):
